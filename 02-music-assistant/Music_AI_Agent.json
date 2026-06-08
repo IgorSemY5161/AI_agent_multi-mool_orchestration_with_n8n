@@ -1,0 +1,156 @@
+{
+  "name": "Music_AI_Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "2afb8dce-c628-4254-b548-06542a849f76",
+      "name": "When chat message received",
+      "webhookId": "845074d5-b727-4902-a773-6624421b8175"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a strict music database extraction assistant with access to two tools: 'music_artist_tool' (for artist/band biography) and 'music_album_tool' (for discography).\n\nYou MUST NOT use prior knowledge, training data, or assumptions. Use ONLY the data returned by the tools.\n\nFor every request:\n1. Identify if the user is asking about an artist's general biography OR about their albums/discography.\n2. Call the appropriate tool ONCE based on the intent.\n3. If the tool returns no data, respond exactly: \"No information found in music database.\"\n\nIf the user asked about an ARTIST/BAND, return exactly this format:\n- Artist Name:\n- Formed Year:\n- Genre:\n- Origin Country:\n- Biography:\n\nIf the user asked about ALBUMS/DISCOGRAPHY, return exactly this format:\n- Artist Name:\n- Album List: [List the albums found in chronological order if available]\n\nRules:\n- Do not add explanations or extra facts.\n- If a field is not present in the tool response, output \"Not available\".\n- End the response with: \"Information retrieved from music database.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a371fcbe-fc02-4c67-b8af-90f83cdfd1ef",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openrouter/free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        80,
+        208
+      ],
+      "id": "7135dcac-9f9a-428b-ae33-1844339d7d64",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "tntlLNoI69GRAdaL",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Search football clubs in TheAudioDB.\n\nUse this tool when the user asks about a music artist.",
+        "url": "https://www.theaudiodb.com/api/v1/json/2/search.php",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={\"s\": \"{{ $fromAI('artist_name', 'The name of the music artist or band') }}\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        288
+      ],
+      "id": "09e3e63d-c896-4213-8e0e-21812603c94e",
+      "name": "music_artist_tool"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Search football players in TheAudioDB.\n\nInput:\n- team: football club name\n\nUse this tool when the user asks about a music.",
+        "url": "https://www.theaudiodb.com/api/v1/json/2/discography.php",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={\"s\": \"{{ $fromAI('artist_name', 'The name of the artist to fetch albums for') }}\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        288
+      ],
+      "id": "b3a2537f-5d56-4081-a710-d3145f527c6c",
+      "name": "music_album_tool"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "music_artist_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "music_album_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1bf8e2eb-9c1f-45b3-b2db-c37de668b0b4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "764263a3ea11def72a134e0237848484afddc807cd21e8ae22a2b07c52e004b6"
+  },
+  "nodeGroups": [],
+  "id": "38SbZboJaVS7aB3J",
+  "tags": []
+}
